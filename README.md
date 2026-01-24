@@ -7,7 +7,8 @@
 
 > **English** | [中文](#vla4ad-快速入门)
 
-This project was built based on the our previous survey of vision-language-action for autonomous driving[Awesome-VLA4AD](https://github.com/SicongJiang/Awesome-VLA4AD).
+This project was built based on the our previous survey of vision-language-action for autonomous driving[Awesome-VLA4AD](https://github.com/SicongJiang/Awesome-VLA4AD). Welcome to have a look~
+
 A hands-on, beginner-friendly repository for quickly getting started with **Vision-Language-Action (VLA)** models for autonomous driving using the **MS-Swift** framework. This project provides practical code examples, configuration templates, and step-by-step tutorials to help you build, fine-tune, and evaluate VLA-based autonomous driving models with minimal setup.
 
 ---
