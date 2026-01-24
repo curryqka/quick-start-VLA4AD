@@ -7,6 +7,7 @@
 
 > **English** | [中文](#vla4ad-快速入门)
 
+This project was built based on the our previous survey of vision-language-action for autonomous driving[Awesome-VLA4AD](https://github.com/SicongJiang/Awesome-VLA4AD).
 A hands-on, beginner-friendly repository for quickly getting started with **Vision-Language-Action (VLA)** models for autonomous driving using the **MS-Swift** framework. This project provides practical code examples, configuration templates, and step-by-step tutorials to help you build, fine-tune, and evaluate VLA-based autonomous driving models with minimal setup.
 
 ---
@@ -441,7 +442,6 @@ print(sample['location'])
 
 - [A Survey on Vision-Language-Action Models for Autonomous Driving](https://arxiv.org/abs/2506.24044) (VLA4AD 综述)
 - [OmniDrive: Holistic LLM-Agent for Autonomous Driving](https://arxiv.org/abs/2405.01533)
-- [Reasoning-VLA: Fast VLA Model for AD](https://arxiv.org/abs/2511.19912)
 
 ### 官方文档
 
@@ -450,9 +450,8 @@ print(sample['location'])
 - [nuScenes 数据集官网](https://www.nuscenes.org/)
 
 ### 相关项目
-
-- [OmniDrive GitHub](https://github.com/NVlabs/OmniDrive)
 - [Awesome-VLA4AD](https://github.com/SicongJiang/Awesome-VLA4AD)
+- [OmniDrive GitHub](https://github.com/NVlabs/OmniDrive)
 
 ---
 
