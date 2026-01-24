@@ -96,8 +96,8 @@ OmniDrive 是一个面向自动驾驶的综合视觉语言数据集，基于 nuS
 将原始 OmniDrive 数据转换为 MS-Swift 兼容格式：
 
 ```bash
-python convert_omnidrive_to_msswift.py \
-    --input_file /path/to/omnidrive_train.jsonl \
+python convert_omnidrive.py \
+    --input_file /path/to/omnidrive_train.json \
     --output_dir ./preprocessed_data/OmniDrive \
     --data_split train \
     --img_root /path/to/nuscenes/samples \
@@ -109,7 +109,7 @@ python convert_omnidrive_to_msswift.py \
 
 | 参数 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| `--input_file` | str | **必需** | 原始 OmniDrive JSONL 文件路径 |
+| `--input_file` | str | **必需** | 原始 OmniDrive JSON 文件路径 |
 | `--output_dir` | str | `./preprocessed_data/OmniDrive` | 输出目录 |
 | `--data_split` | str | `train` | 数据分割（train/val/test） |
 | `--convert_ratio` | float | `1.0` | 数据转换比例（0.0-1.0） |
