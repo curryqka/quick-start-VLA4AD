@@ -273,7 +273,19 @@ swift export \
 ---
 
 ## 🏗 构建 VLA4AD 模型
+我想实现一个vla模型，要求在qwen2.5-vl的vlm上加入head，head解码得到轨迹，然后数据是需要图片，输入的文本；输出的文本答案用以监督。除此之外，然后还有一个轨迹的输出，轨迹训练和语言文本训练两个任务一起；
 
+TODO:
+1. 查看ms-swift示例，基础模型如何加载模型，加载数据，加载权重
+https://swift.readthedocs.io/zh-cn/latest/Customization/Custom-model.html
+https://swift.readthedocs.io/zh-cn/latest/BestPractices/MLLM-Registration.html
+特别是看注册model的部分和数据的格式
+2. 我理解需要编写一个modeling_qwen2_5_vla.py, 这个是新的模型，以及损失函数也在里面定义了，加入一个轨迹的mseloss；新的模型的mlp是随机初始化的参数;
+3. 其次，我需要写一个函数save_custom_model.py, 修改config文件，继承原先qwen的config然后加入几个diy_model中新增的东西（针对vla模型新增的就是动作解码器的维度参数），用一个save函数把这个模型保存下来到本地的model_dir(权重文件，qwen2.5-VL-3B的权重完全继承，只有mlphead部分是需要初始化的)，然后手动把原先除权重文件复制过来到这个文件夹，参考这个https://swift.readthedocs.io/zh-cn/latest/BestPractices/Rapidly-Training-VL-model.html;
+4. 写template, custom_dataset.py, 增加轨迹数据加载进去，这部分是用于监督的轨迹数据，继承qwen模型的载入方式;
+5. 注册模型文件custom_model.py，ms-swift启动时候把自己的模型正确载入，注册进去，继承qwen模型的载入方式;
+6. 写训练sh脚本，把外接自定义的数据和模型脚本注册进去，并且调用正确的数据集;
+7. 推理时候模型还应该输出轨迹信息.
 ### 项目结构
 
 ```
