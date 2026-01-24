@@ -8,6 +8,8 @@ from swift.llm import (
 from swift.llm.model.model.qwen import get_model_tokenizer_qwen2_vl
 # from swift.utils import require_version
 
+
+
 """
 Qwen2.5-VLA Template 完整实现
 继承自 Qwen2_5VLTemplate，仅新增 trajectory 字段处理
@@ -20,10 +22,13 @@ from typing import Any, Dict, List, Optional
 import torch
 from swift.llm import to_float_dtype
 import sys
-# sys.path.append("./ms-swift-main/swift/llm/template")
+# sys.path.append("/high_perf_store2/tfl-vepfs/qiankangan-vla/BaseModel/ms-swift-main/swift/llm/template")
 from swift.llm import register_template, TemplateMeta
 # from template_inputs import StdTemplateInputs
 from swift.llm.template.template.qwen import Qwen2_5VLTemplate, Qwen2_5TemplateMeta  # 关键：继承自官方的 Qwen2_5VLTemplate
+
+
+
 
 @dataclass
 class QwenVLATemplateMeta(Qwen2_5TemplateMeta):
@@ -64,13 +69,23 @@ class Qwen2_5VLATemplate(Qwen2_5VLTemplate):
     def _encode(self, inputs) -> Dict[str, Any]:
         """
         核心编码函数：处理多模态输入 + trajectory
+
         """
+
+        breakpoint()
         # 1. 先调用父类方法处理图像/视频/文本，得到基础编码
         encoded = super()._encode(inputs)
         
         # 2. 提取 trajectory 数据（如果存在）
-        trajectory = getattr(inputs, 'trajectory', None)
-        
+        # trajectory = getattr(inputs, 'trajectory', None)
+        extra_info = getattr(inputs, 'extra_kwargs', None)
+        # 'trajectory': formatted_trajectory,  # 轨迹点作为解决方案
+        #     'navigation': navigation_instructions,  # 导航指令
+        #     'question_type': 'omnidrive_trajectory',
+        #     'metadata': metadata
+        trajectory = getattr(extra_info, 'trajectory', None)
+        navigation_command =  getattr(extra_info, 'navigation', None)
+
         if trajectory is not None:
             # 确保是 tensor 并正确形状
             if not isinstance(trajectory, torch.Tensor):
@@ -205,6 +220,7 @@ def get_model_tokenizer_qwen2_5_vla(model_dir, *args, **kwargs):
         pass
         
     return model, processor
+
 
 # 注册 template
 # register_template(QwenVLATemplateMeta(
