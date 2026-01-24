@@ -126,9 +126,9 @@ python convert_omnidrive.py \
 
 ---
 
-### 轨迹数据转换（数值型）
+### 轨迹数据转换（数值转到文本内容型）
 
-将 nuScenes 轨迹数据转换为数值坐标格式：
+将 nuScenes 轨迹数据转换为文本内容格式：
 
 ```bash
 python prepare_omnidrive_planning_data.py \
@@ -155,7 +155,7 @@ python prepare_omnidrive_planning_data.py \
 
 ---
 
-### 轨迹数据转换（语义导航型）
+### 轨迹数据转换（语义导航型，数值单独放一个key）
 
 生成高层级语义导航指令（如"向左转，进入主路"）：
 
