@@ -1,187 +1,194 @@
-# quick-start-VLA4AD
-A hands-on, beginner-friendly repository to quickly get started with Vision-Language-Action (VLA)​ models for autonomous driving using the MS-Swift​ framework. This project provides practical code examples, configuration templates, and step-by-step tutorials to help you build, fine-tune, and evaluate VLA-based AD models with minimal setup.
-VLA4AD: 基于MS-Swift的自动驾驶VLA模型实战指南
 
-这是一个快速上手用ms-swift完成自动驾驶Vision-Language-Action (VLA)模型实战的仓库。本教程将指导你从数据准备、模型下载、训练到推理的完整流程。
+# VLA4AD Quick Start
 
-环境搭建
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Framework: MS-Swift](https://img.shields.io/badge/Framework-MS--Swift-blue)](https://github.com/modelscope/ms-swift)
+[![Topic: VLA](https://img.shields.io/badge/Topic-Vision--Language--Action-orange)](https://arxiv.org/abs/2506.24044)
 
-1. 安装MS-Swift
+> **English** | [中文](#vla4ad-快速入门)
 
+A hands-on, beginner-friendly repository for quickly getting started with **Vision-Language-Action (VLA)** models for autonomous driving using the **MS-Swift** framework. This project provides practical code examples, configuration templates, and step-by-step tutorials to help you build, fine-tune, and evaluate VLA-based autonomous driving models with minimal setup.
+
+---
+
+## 🚗 VLA4AD 快速入门
+
+基于 MS-Swift 框架的自动驾驶 VLA 模型实战指南。本仓库提供从数据准备、模型下载、训练到推理的完整流程，帮助您快速上手构建自动驾驶 Vision-Language-Action 模型。
+
+---
+
+## 📋 目录
+
+- [环境搭建](#-环境搭建)
+- [模型下载](#-模型下载)
+- [数据下载](#-数据下载)
+- [数据准备](#-数据准备)
+  - [OmniDrive VQA 数据格式转换](#omnidrive-vqa-数据格式转换)
+  - [轨迹数据转换（数值型）](#轨迹数据转换数值型)
+  - [轨迹数据转换（语义导航型）](#轨迹数据转换语义导航型)
+- [基础模型推理](#-基础模型推理)
+- [LoRA 微调](#-lora-微调)
+- [权重合并](#-权重合并)
+- [构建 VLA4AD 模型](#-构建-vla4ad-模型)
+- [轨迹数据文件说明](#-轨迹数据文件说明)
+- [注意事项](#-注意事项)
+- [故障排除](#-故障排除)
+- [参考资料](#-参考资料)
+
+---
+
+## 🛠 环境搭建
+
+### 安装 MS-Swift
+
+```bash
 git clone https://github.com/modelscope/ms-swift.git
 cd ms-swift
 pip install -e .
+```
 
+**环境要求：**
+- Python ≥ 3.8
+- PyTorch ≥ 2.0
+- CUDA ≥ 11.7
 
-模型下载
+---
 
-2. 下载Qwen2.5-VL-3B-Instruct模型
+## 📥 模型下载
 
-• 从Hugging Face下载模型：https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct
+### Qwen2.5-VL-3B-Instruct
 
-• 使用官方推理脚本测试模型功能
+本教程使用 Qwen2.5-VL-3B-Instruct 作为基础视觉语言模型。
 
-• 参考资源：
+| 资源类型 | 链接 |
+|---------|------|
+| 🤗 Hugging Face | [Qwen/Qwen2.5-VL-3B-Instruct](https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct) |
+| 📖 官方文档 | [Transformers Docs](https://huggingface.co/docs/transformers/model_doc/qwen2_5_vl) |
+| 💻 示例代码 | [qwen2.5vl GitHub](https://github.com/dongyaolin/qwen2.5vl) |
 
-  • 模型地址: https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct
+> **提示**：首次使用前建议运行官方推理脚本验证模型功能是否正常。
 
-  • 官方文档: https://hugging-face.cn/docs/transformers/model_doc/qwen2_5_vl
+---
 
-  • 示例代码: https://github.com/dongyaolin/qwen2.5vl
+## 📊 数据下载
 
-数据下载
+### OmniDrive 数据集
 
-3. 下载OmniDrive数据集
+OmniDrive 是一个面向自动驾驶的综合视觉语言数据集，基于 nuScenes 构建。
 
-• 发布页面: https://github.com/NVlabs/OmniDrive/releases/tag/v1.0
+| 文件 | 说明 | 下载链接 |
+|------|------|----------|
+| `data_nusc.zip` | VQA 问答数据 | [Download](https://github.com/NVlabs/OmniDrive/releases/download/v1.0/data_nusc.zip) |
+| `nuscenes_ego_infos_train.pkl` | 训练集轨迹数据 | [Download](https://github.com/NVlabs/OmniDrive/releases/download/v1.0/nuscenes_ego_infos_train.pkl) |
+| `nuscenes_ego_infos_val.pkl` | 验证集轨迹数据 | 同上，替换文件名 |
 
-• VQA数据文件: https://github.com/NVlabs/OmniDrive/releases/download/v1.0/data_nusc.zip
+**数据集特点：**
+- 基于 nuScenes 700+ 驾驶场景
+- 包含 3D 感知、推理和规划的 VQA 标注
+- 支持反事实推理（Counterfactual Reasoning）
 
-数据准备
+---
 
-4.1 准备OmniDrive VQA数据
+## 🔄 数据准备
 
-将原始OmniDrive数据转换为MS-Swift格式：
+### OmniDrive VQA 数据格式转换
+
+将原始 OmniDrive 数据转换为 MS-Swift 兼容格式：
+
+```bash
 python convert_omnidrive_to_msswift.py \
     --input_file /path/to/omnidrive_train.jsonl \
     --output_dir ./preprocessed_data/OmniDrive \
     --data_split train \
-    --img_root /lustre/MLM_evaluator/data/omnidrive \
+    --img_root /path/to/nuscenes/samples \
     --check_images \
     --verbose
+```
 
+**参数说明：**
 
-脚本参数说明：
-• --input_file: 原始jsonl文件路径（必需）
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `--input_file` | str | **必需** | 原始 OmniDrive JSONL 文件路径 |
+| `--output_dir` | str | `./preprocessed_data/OmniDrive` | 输出目录 |
+| `--data_split` | str | `train` | 数据分割（train/val/test） |
+| `--convert_ratio` | float | `1.0` | 数据转换比例（0.0-1.0） |
+| `--img_root` | str | `/lustre/.../omnidrive` | 图像根目录 |
+| `--system_prompt_type` | str | `default` | 系统提示类型（default/detailed/simple） |
+| `--camera_order` | str | `None` | 自定义相机顺序，如 `CAM_FRONT,CAM_LEFT` |
+| `--check_images` | bool | `False` | 检查图像文件是否存在 |
+| `--allow_no_images` | bool | `False` | 允许没有图像的样本 |
+| `--verbose` | bool | `False` | 显示详细处理信息 |
 
-• --output_dir: 输出目录，默认./preprocessed_data/OmniDrive
+**输出文件：**
+- `omnidrive_{split}.jsonl`：转换后的 MS-Swift 格式数据
+- `conversion_stats_{split}.txt`：转换统计信息
 
-• --data_split: 数据分割，可选train/val/test，默认train
+---
 
-• --convert_ratio: 数据转换比例，0.0-1.0，默认1.0
+### 轨迹数据转换（数值型）
 
-• --img_root: 图片根目录，默认/lustre/MLM_evaluator/data/omnidrive
+将 nuScenes 轨迹数据转换为数值坐标格式：
 
-• --output_name: 输出文件名（自动生成时忽略）
-
-• --system_prompt_type: 系统提示类型，可选default/detailed/simple
-
-• --camera_order: 自定义相机顺序，逗号分隔
-
-• --custom_descriptions: 自定义相机描述，格式CAM1:desc1,CAM2:desc2
-
-• --image_first_question: 在问题开头添加图片标记
-
-• --check_images: 检查图片文件是否存在
-
-• --allow_no_images: 允许没有图片的样本
-
-• --verbose: 详细输出
-
-• --seed: 随机种子，默认42
-
-输出文件：
-• 转换后的jsonl文件，格式为MS-Swift兼容格式
-
-• 转换统计文件conversion_stats_{split}.txt
-
-4.2 准备轨迹数据（数值型）
-
-从nuScenes轨迹数据转换为MS-Swift格式：
-python convert_nuscenes_to_msswift.py \
+```bash
+python prepare_omnidrive_planning_data.py \
     --input_file /path/to/nuscenes_ego_infos_val.pkl \
     --output_dir ./preprocessed_data/nuscenes_trajectory \
     --data_split val \
-    --img_root /path/to/nuscenes/images \
+    --img_root /path/to/nuscenes/samples \
     --trajectory_format string \
     --use_scene_description \
     --check_images
+```
 
+**轨迹格式选项（`--trajectory_format`）：**
 
-脚本参数说明：
-• --input_file: 输入pkl文件路径（必需）
+| 格式 | 描述 | 示例 |
+|------|------|------|
+| `list` | Python 列表 | `[[x, y, heading], ...]` |
+| `string` | 字符串格式 | `"[-0.023, 0.004, -0.003], ..."` |
+| `detailed` | 带时间戳的自然语言 | "0.5秒后，车辆位于..." |
+| `compact` | 精简坐标序列 | `x1,y1,h1,x2,y2,h2...` |
 
-• --output_dir: 输出目录，默认./preprocessed_data/nuscenes_trajectory
+**新增参数：**
+- `--use_scene_description`：在提示中包含场景描述（如 "停车场, 障碍物, 出口"）
 
-• --data_split: 数据分割，可选train/val/test，默认train
+---
 
-• --convert_ratio: 数据转换比例，0.0-1.0，默认1.0
+### 轨迹数据转换（语义导航型）
 
-• --img_root: 图片根目录
+生成高层级语义导航指令（如"向左转，进入主路"）：
 
-• --output_name: 输出文件名（自动生成时忽略）
-
-• --system_prompt_type: 系统提示类型，可选default/detailed/planning_focused
-
-• --camera_order: 自定义相机顺序
-
-• --custom_descriptions: 自定义相机描述
-
-• --image_first_question: 在问题开头添加图片标记
-
-• --check_images: 检查图片文件是否存在
-
-• --allow_no_images: 允许没有图片的样本
-
-• --use_scene_description: 在提示中包含场景描述
-
-• --trajectory_format: 轨迹输出格式，可选list/string/detailed/compact
-
-• --verbose: 详细输出
-
-• --seed: 随机种子，默认42
-
-4.3 准备轨迹数据（语义导航型）
-
-生成高层级语义导航指令：
-python convert_nuscenes_to_msswift_navigation.py \
+```bash
+python prepare_omnidrive_numerical_planning_data.py \
     --input_file /path/to/nuscenes_ego_infos_val.pkl \
     --output_dir ./preprocessed_data/nuscenes_navigation \
     --data_split val \
-    --img_root /path/to/nuscenes/images \
+    --img_root /path/to/nuscenes/samples \
     --navigation_format structured \
     --user_prompt_type structured \
     --check_images
+```
 
+**导航格式选项（`--navigation_format`）：**
 
-脚本参数说明：
-• --input_file: 输入pkl文件路径（必需）
+| 格式 | 描述 | 示例 |
+|------|------|------|
+| `structured` | 结构化 JSON | `{"action": "turn_left", "target": "main_road"}` |
+| `detailed` | 自然语言长描述 | "在前方路口左转进入主干道..." |
+| `simple` | 简短指令 | "左转" |
 
-• --output_dir: 输出目录，默认./preprocessed_data/nuscenes_navigation
+**用户提示类型（`--user_prompt_type`）：**
+- `structured`：结构化提问
+- `default`："请规划下一步动作"
 
-• --data_split: 数据分割，可选train/val/test，默认train
+---
 
-• --convert_ratio: 数据转换比例，0.0-1.0，默认1.0
+## 🧠 基础模型推理
 
-• --img_root: 图片根目录
+使用转换后的验证集进行零样本（Zero-shot）推理：
 
-• --output_name: 输出文件名（自动生成时忽略）
-
-• --system_prompt_type: 系统提示类型，可选default/detailed/instruction_focused
-
-• --user_prompt_type: 用户提示类型，可选default/structured/simple
-
-• --camera_order: 自定义相机顺序
-
-• --custom_descriptions: 自定义相机描述
-
-• --image_first_question: 在问题开头添加图片标记
-
-• --check_images: 检查图片文件是否存在
-
-• --allow_no_images: 允许没有图片的样本
-
-• --navigation_format: 导航指令格式，可选structured/detailed/simple
-
-• --include_scene_in_user: 当没有图片时在用户提示中包含场景描述
-
-• --verbose: 详细输出
-
-• --seed: 随机种子，默认42
-
-基础模型推理
-
-使用转换后的验证集数据进行推理：
+```bash
 export CUDA_VISIBLE_DEVICES=0
 MODEL_PATH="/path/to/Qwen2.5-VL-3B-Instruct"
 
@@ -194,17 +201,25 @@ swift infer \
     --val_dataset /path/to/omnidrive_val.jsonl \
     --max_batch_size 1 \
     --result_path ./infer_results/omnidrive-bench
+```
 
+**输出：**
+- 推理结果保存为 JSONL 格式，包含模型回答和元数据
+- 可用于后续评估或可视化分析
 
-LoRA微调
+---
 
-使用OmniDrive数据进行LoRA微调：
+## 🎛 LoRA 微调
+
+使用 OmniDrive 数据对模型进行高效参数微调：
+
+```bash
 export CUDA_VISIBLE_DEVICES=0
 
 swift sft \
     --model /path/to/Qwen2.5-VL-3B-Instruct \
     --train_type lora \
-    --dataset swift/stsb \
+    --dataset /path/to/omnidrive_train.jsonl \
     --num_train_epochs 3 \
     --per_device_train_batch_size 1 \
     --per_device_eval_batch_size 1 \
@@ -220,39 +235,69 @@ swift sft \
     --warmup_ratio 0.05 \
     --dataloader_num_workers 4 \
     --max_length 2048 \
-    --output_dir /path/to/output_folder \
+    --output_dir ./output/lora_omnidrive \
     --dataset_num_proc 4
+```
 
+**关键参数说明：**
 
-权重合并
+| 参数 | 建议值 | 说明 |
+|------|--------|------|
+| `--train_type` | `lora` | 训练类型（lora/full/...） |
+| `--lora_rank` | 8 | LoRA 低秩维度 |
+| `--lora_alpha` | 32 | LoRA 缩放系数 |
+| `--target_modules` | `all-linear` | 目标模块（Qwen-VL 通常用 all-linear） |
+| `--gradient_accumulation_steps` | 16 | 梯度累积步数 |
 
-微调完成后，合并LoRA权重：
-./ms-swift-main/examples/export/merge_lora.sh
+> ⚠️ **注意**：请将 `--dataset` 替换为您实际预处理好的 `.jsonl` 文件路径。
 
+---
 
-构建VLA4AD模型
+## 🔗 权重合并
 
-文件结构
+微调完成后，将 LoRA 权重合并回基础模型：
 
+```bash
+swift export \
+    --model /path/to/Qwen2.5-VL-3B-Instruct \
+    --adapters /path/to/lora_output \
+    --merge_lora true \
+    --save_directory /path/to/merged_model
+```
 
+**合并后模型特点：**
+- 单模型文件，无需额外加载适配器
+- 可直接用于推理或进一步微调
+- 支持导出为 Hugging Face 格式
+
+---
+
+## 🏗 构建 VLA4AD 模型
+
+### 项目结构
+
+```
 vla4ad/
-├── custom_model.py          # 定义template和模型注册载入
-├── custom_dataset.py        # 定义数据加载的内容
-├── save_custom_model.py     # 保存新的模型权重和config文件
-└── modeling_qwen2_5_vla.py  # 修改qwen模型加入mlp head解码轨迹
+├── custom_model.py          # 模型模板注册与架构定义
+├── custom_dataset.py        # 自定义数据集加载器
+├── save_custom_model.py     # 模型权重与配置保存
+└── modeling_qwen2_5_vla.py  # 扩展 Qwen 模型，添加轨迹解码头
+```
 
+**核心组件：**
+- `modeling_qwen2_5_vla.py`：在语言模型顶部添加 MLP Head，将文本 token 的隐藏状态映射为 `(x, y, heading)` 轨迹点
 
-训练VLA模型
+### 训练 VLA 模型
 
+```bash
 export CUDA_VISIBLE_DEVICES=0
-export MAX_PIXELS=1003520
+export MAX_PIXELS=1003520  # 控制图像分辨率上限
 
 swift sft \
     --model '/path/to/qwenvla/' \
     --dataset 'omnidrive.jsonl' \
     --remove_unused_columns false \
-    --custom_register_path custom_dataset.py \
-                            custom_model.py \
+    --custom_register_path custom_dataset.py custom_model.py \
     --train_type lora \
     --torch_dtype bfloat16 \
     --num_train_epochs 20 \
@@ -269,66 +314,146 @@ swift sft \
     --save_total_limit 5 \
     --logging_steps 5 \
     --max_length 2048 \
-    --output_dir /path/to/output_folder \
+    --output_dir ./output/vla4ad_model \
     --warmup_ratio 0.05 \
     --dataloader_num_workers 4 \
     --dataset_num_proc 4
+```
 
+**优化技巧：**
+- `--freeze_vit true`：冻结视觉编码器，加速训练并节省显存
+- `MAX_PIXELS`：限制输入图像分辨率，平衡精度与速度
 
-轨迹数据文件
+---
 
-轨迹数据可从以下位置获取：
-• 轨迹数据文件: https://github.com/NVlabs/OmniDrive/releases/download/v1.0/nuscenes_ego_infos_train.pkl
+## 📈 轨迹数据文件说明
 
-数据结构示例：
-# nuscenes_ego_infos_val.pkl
-infos['data_list'][0].keys()
-# dict_keys(['sample_idx', 'token', 'timestamp', 'ego2global', 'images', 'lidar_points', 
-#           'instances', 'cam_instances', 'can_bus', 'lane_info', 'gt_fut_traj', 
-#           'gt_fut_yaw', 'gt_fut_traj_mask', 'gt_fut_idx', 'gt_planning', 
-#           'gt_planning_mask', 'gt_planning_command', 'description', 'location', 
-#           'scene_name', 'map_geoms'])
+### 获取方式
 
-# 轨迹数据
-infos['data_list'][0]['gt_planning']
-# array([[[-0.02338394,  0.00395733, -0.00292365],
-#         [-0.02435618,  0.00648969, -0.00425898],
-#         [-0.02409667,  0.00829917, -0.00493517],
-#         [-0.02323897,  0.00956105, -0.00510122],
-#         [-0.01144369,  0.010625  , -0.00544585],
-#         [ 0.14093415,  0.01071738, -0.00940987]]])
+| 数据集 | 文件 | 下载 |
+|--------|------|------|
+| 训练集 | `nuscenes_ego_infos_train.pkl` | [Download](https://github.com/NVlabs/OmniDrive/releases/download/v1.0/nuscenes_ego_infos_train.pkl) |
+| 验证集 | `nuscenes_ego_infos_val.pkl` | 同上，替换文件名 |
 
-# 轨迹形状: (1, 6, 3) - 最后三个维度是(x, y, heading)
+### 数据结构
 
-# 场景描述
-infos['data_list'][0]['description']
+```python
+import pickle
+
+# 加载数据
+with open('nuscenes_ego_infos_val.pkl', 'rb') as f:
+    infos = pickle.load(f)
+
+sample = infos['data_list'][0]
+print(sample.keys())
+# dict_keys([
+#   'sample_idx', 'token', 'timestamp', 'ego2global', 
+#   'images', 'lidar_points', 'instances', 'cam_instances',
+#   'can_bus', 'lane_info', 'gt_fut_traj', 'gt_fut_yaw',
+#   'gt_fut_traj_mask', 'gt_fut_idx', 'gt_planning',
+#   'gt_planning_mask', 'gt_planning_command', 
+#   'description', 'location', 'scene_name', 'map_geoms'
+# ])
+```
+
+### 轨迹数据格式
+
+```python
+# 轨迹数据（未来6个时间步，每步包含 x, y, heading）
+print(sample['gt_planning'].shape)  # (1, 6, 3)
+
+# 坐标说明：
+# - x: 纵向位移（米），前方为正
+# - y: 横向位移（米），左侧为正  
+# - heading: 航向角变化（弧度）
+
+print(sample['gt_planning'][0])
+# array([[-0.023,  0.004, -0.003],
+#        [-0.024,  0.006, -0.004],
+#        ...
+#        [ 0.141,  0.011, -0.009]])
+```
+
+### 场景描述示例
+
+```python
+print(sample['description'])
 # 'Parking lot, barrier, exit parking lot'
 
+print(sample['location'])
+# 'boston-seaport' 或 'singapore-onenorth'
+```
 
-注意事项
+---
 
-1. 确保有足够的GPU内存进行训练
-2. 图片路径需要正确配置
-3. 建议先在小规模数据上进行测试
-4. 微调前后对比推理结果以评估效果
-5. 轨迹数据转换时注意检查图片是否存在
+## ⚠️ 注意事项
 
-故障排除
+1. **GPU 显存要求**
+   - 推理：≥ 24GB（推荐 RTX 3090/4090 或 A100）
+   - 训练：≥ 48GB（推荐 A100 80GB 或多卡训练）
 
-• 如果遇到"CUDA out of memory"错误，尝试减少per_device_train_batch_size
+2. **路径配置**
+   - 确保 `--img_root` 指向 nuScenes `samples/` 目录
+   - 图像路径应包含所有相机子目录（如 `CAM_FRONT`, `CAM_BACK` 等）
 
-• 如果图片加载失败，检查--img_root参数设置
+3. **小规模测试**
+   - 首次运行建议设置 `--convert_ratio 0.01` 验证流程
+   - 确认无误后再处理完整数据集
 
-• 如果模型加载失败，检查模型路径和格式
+4. **效果评估**
+   - 微调前后务必在相同验证集上对比
+   - 建议使用 CIDEr、METEOR 等指标量化评估
 
-• 如果数据转换出错，使用--verbose参数查看详细错误信息
+5. **时序对齐**
+   - 确保 `gt_planning` 与图像时间戳严格对齐
+   - 检查时序错位可能导致训练不稳定
 
-参考资料
+---
 
-• https://swift.readthedocs.io/
+## 🛠 故障排除
 
-• https://hugging-face.cn/docs/transformers/model_doc/qwen2_5_vl
+| 问题 | 可能原因 | 解决方案 |
+|------|----------|----------|
+| `CUDA out of memory` | 显存不足 | 降低 `per_device_train_batch_size`，启用 `gradient_checkpointing` |
+| 图片加载失败 | 路径错误或文件缺失 | 检查 `--img_root` 是否包含所有相机子目录 |
+| 模型加载失败 | 文件不完整 | 确认路径下包含 `config.json`, `pytorch_model.bin`, `tokenizer.json` |
+| 数据转换报错 | 格式不兼容 | 添加 `--verbose` 查看具体样本，检查 `--allow_no_images` 是否必要 |
+| LoRA 不生效 | 目标模块不匹配 | 确保 `--target_modules` 为 `all-linear`（Qwen-VL 架构） |
+| 训练 loss 不下降 | 学习率过高或数据问题 | 尝试降低 `learning_rate` 至 `5e-5`，检查数据格式 |
 
-• https://github.com/NVlabs/OmniDrive
+---
 
-• https://www.nuscenes.org/
+## 📚 参考资料
+
+### 核心论文
+
+- [A Survey on Vision-Language-Action Models for Autonomous Driving](https://arxiv.org/abs/2506.24044) (VLA4AD 综述)
+- [OmniDrive: Holistic LLM-Agent for Autonomous Driving](https://arxiv.org/abs/2405.01533)
+- [Reasoning-VLA: Fast VLA Model for AD](https://arxiv.org/abs/2511.19912)
+
+### 官方文档
+
+- [MS-Swift 官方文档](https://github.com/modelscope/ms-swift)
+- [Qwen2.5-VL Hugging Face 文档](https://huggingface.co/docs/transformers/model_doc/qwen2_5_vl)
+- [nuScenes 数据集官网](https://www.nuscenes.org/)
+
+### 相关项目
+
+- [OmniDrive GitHub](https://github.com/NVlabs/OmniDrive)
+- [Awesome-VLA4AD](https://github.com/SicongJiang/Awesome-VLA4AD)
+
+---
+
+## 📄 许可证
+
+本项目采用 [MIT License](https://opensource.org/licenses/MIT) 开源。
+
+## 🤝 贡献
+
+欢迎提交 Issue 和 Pull Request！如有问题，请在 GitHub Issues 中讨论。
+
+---
+
+**Star History**
+
+如果本项目对您有帮助，请给我们一个 ⭐️ Star！
