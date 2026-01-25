@@ -93,7 +93,8 @@ Download the [nuScenes dataset](https://www.nuscenes.org/download) to ./data/nus
 
 2. Download infos files Download the [Info Files](https://github.com/NVlabs/OmniDrive/releases/download/v1.0/data_nusc.zip).
 Unzip the data_nusc.tar.gz and move the files into data/nuscenes/.
-The pkl info is generated using StreamPETR's data converter. We converted the GT in the lidar coordinate to an ego coordinate system using update_coords.py (to align with OpenLanev2) and added canbus/command information.
+
+The pkl info is generated using StreamPETR's data converter. We converted the GT in the lidar coordinate to an ego coordinate system using [update_coords.py](https://github.com/NVlabs/OmniDrive/blob/main/update_coords.py) (to align with OpenLanev2) and added canbus/command information.
 
 Folder Structure:
 ```
