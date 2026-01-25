@@ -50,7 +50,7 @@ pip install -e .
 ```
 
 **环境要求：**
-- Python ≥ 3.8
+- Python ≥ 3.9
 - PyTorch ≥ 2.0
 - CUDA ≥ 11.7
 
@@ -291,6 +291,11 @@ swift sft \
 ## 🔗 权重合并
 
 微调完成后，将 LoRA 权重合并回基础模型：
+直接用ms-swift提供的脚本:
+```
+bash ./ms-swift-main/examples/export/merge_lora.sh
+```
+
 
 ```bash
 swift export \
@@ -299,6 +304,7 @@ swift export \
     --merge_lora true \
     --save_directory /path/to/merged_model
 ```
+
 
 **合并后模型特点：**
 - 单模型文件，无需额外加载适配器
