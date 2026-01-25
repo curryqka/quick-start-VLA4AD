@@ -128,6 +128,7 @@ Folder Structure:
 ### OmniDrive VQA 数据格式转换
 
 将原始 OmniDrive 数据转换为 MS-Swift 兼容格式：
+原始的omnidrive json文件位于vqa, conv里面, keywords和desc也可以考虑用起来, 这里没用上;
 
 ```bash
 python convert_omnidrive.py \
