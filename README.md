@@ -77,6 +77,8 @@ pip install -e .
 ### OmniDrive 数据集
 
 OmniDrive 是一个面向自动驾驶的综合视觉语言数据集，基于 nuScenes 构建。
+完整的数据下载链接:
+[Download](https://github.com/NVlabs/OmniDrive/releases/tag/v1.0)
 
 | 文件 | 说明 | 下载链接 |
 |------|------|----------|
