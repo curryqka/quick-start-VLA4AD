@@ -86,6 +86,35 @@ OmniDrive 是一个面向自动驾驶的综合视觉语言数据集，基于 nuS
 | `nuscenes_ego_infos_train.pkl` | 训练集轨迹数据 | [Download](https://github.com/NVlabs/OmniDrive/releases/download/v1.0/nuscenes_ego_infos_train.pkl) |
 | `nuscenes_ego_infos_val.pkl` | 验证集轨迹数据 | 同上，替换文件名 |
 
+
+1. Download nuScenes
+
+Download the [nuScenes dataset](https://www.nuscenes.org/download) to ./data/nuscenes.
+
+2. Download infos files Download the [Info Files](https://github.com/NVlabs/OmniDrive/releases/download/v1.0/data_nusc.zip).
+Unzip the data_nusc.tar.gz and move the files into data/nuscenes/.
+The pkl info is generated using StreamPETR's data converter. We converted the GT in the lidar coordinate to an ego coordinate system using update_coords.py (to align with OpenLanev2) and added canbus/command information.
+
+Folder Structure:
+```
+├── data/
+│   ├── nuscenes/
+│   │   ├── maps/
+│   │   ├── samples/
+│   │   ├── sweeps/
+│   │   ├── v1.0-test/
+│   │   ├── v1.0-trainval/
+│   │   ├── conv/
+│   │   ├── desc/
+│   │   ├── keywords/
+│   │   ├── vqa/
+│   │   ├── nuscenes2d_ego_temporal_infos_train.pkl
+│   │   ├── nuscenes2d_ego_temporal_infos_val.pkl
+│   │   ├── data_dict_sample.pkl
+│   │   ├── data_dict_subset_B.json
+│   │   ├── data_dict_subset_B_val.pkl
+│   │   ├── lane_obj_train.pkl
+```
 **数据集特点：**
 - 基于 nuScenes 700+ 驾驶场景
 - 包含 3D 感知、推理和规划的 VQA 标注
