@@ -163,9 +163,12 @@ class Qwen2_5_VLAForConditionalGeneration(Qwen2_5_VLForConditionalGeneration):
         #     trajectory_loss=traj_loss,
         # )
     
+
+    """已经集成到ms-swift"""
     @torch.no_grad()
     def generate(
         self,
+        input_ids: Optional = None,
         inputs: Optional[torch.Tensor] = None,
         attention_mask: Optional[torch.Tensor] = None,
         pixel_values: Optional[torch.Tensor] = None,
@@ -179,21 +182,52 @@ class Qwen2_5_VLAForConditionalGeneration(Qwen2_5_VLForConditionalGeneration):
         """
         文本生成 + 轨迹预测
         """
+        # generate_kwargs = {}
         # 1. 强制输出 hidden_states
         generate_kwargs["output_hidden_states"] = True
-        generate_kwargs["return_dict_in_generate"] = True
-
+        generate_kwargs["return_dict_in_generate"] = False
+        # do_sample=False,
+        # temperature=0,
+        # max_new_tokens=4096,
+        generate_kwargs.pop('trajectory')
+        # return_dict_in_generate = generate_kwargs.pop('return_dict_in_generate')
+        return_dict_in_generate = generate_kwargs.get('return_dict_in_generate', None)
+        # generate_kwargs.pop('generation_config')
+        
+        # breakpoint()
         # 2. 走父类 generate
-        gen_out = super().generate(
-            inputs=inputs,
-            attention_mask=attention_mask,
-            pixel_values=pixel_values,
-            image_grid_thw=image_grid_thw,
-            pixel_values_videos=pixel_values_videos,
-            video_grid_thw=video_grid_thw,
-            **generate_kwargs
-        )
+        with torch.no_grad():
+            if inputs is not None:
+                gen_out = super().generate(
+                    inputs=inputs,
+                    # input_ids=input_ids,
+                    attention_mask=attention_mask,
+                    pixel_values=pixel_values,
+                    image_grid_thw=image_grid_thw,
+                    pixel_values_videos=pixel_values_videos,
+                    video_grid_thw=video_grid_thw,
+                    **generate_kwargs
+                )
+            else:
+                # breakpoint()
+                
+                inputs = {
+                    "input_ids": input_ids,
+                    "attention_mask": attention_mask,
+                    "pixel_values": pixel_values,
+                    "image_grid_thw": image_grid_thw,
+                    "pixel_values_videos": pixel_values_videos,
+                    "video_grid_thw": video_grid_thw,
+                }
+                # breakpoint()
+                # 这里是否要把generate_kwargs一些参数取出来?
+                gen_out = super().generate(
+                    **inputs,
+                    **generate_kwargs
+                )
 
+
+        # breakpoint()
         # 3. 正确获取最后一层的隐藏状态
         # gen_out.hidden_states 是一个元组 (tuple)，每个元素是各层的隐藏状态
         # 最后一层的隐藏状态是 gen_out.hidden_states[-1] (一个张量)
@@ -212,4 +246,4 @@ class Qwen2_5_VLAForConditionalGeneration(Qwen2_5_VLForConditionalGeneration):
             gen_out.trajectory = trajectory
             return gen_out
         else:
-            return gen_out.sequences
+            return gen_out
