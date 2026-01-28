@@ -72,7 +72,7 @@ class Qwen2_5VLATemplate(Qwen2_5VLTemplate):
 
         """
 
-        breakpoint()
+        # breakpoint()
         # 1. 先调用父类方法处理图像/视频/文本，得到基础编码
         encoded = super()._encode(inputs)
         
@@ -146,7 +146,7 @@ class Qwen2_5VLATemplate(Qwen2_5VLTemplate):
         if trajectories:
             # 直接堆叠，确保batch_size一致
             res['trajectory'] = torch.cat(trajectories, dim=0)
-            res['has_real_trajectory'] = has_real_trajectory
+            # res['has_real_trajectory'] = has_real_trajectory
         
         return res
     
@@ -167,7 +167,8 @@ class Qwen2_5VLATemplate(Qwen2_5VLTemplate):
     
     def _post_encode(self, model, inputs: Dict[str, Any]) -> Dict[str, Any]:
         
-        print('inputs:', inputs.keys())
+        print('\ninputs:', inputs.keys())
+        # breakpoint()
         return inputs
 
     def get_trajectory_info(self) -> Dict[str, Any]:
@@ -179,6 +180,12 @@ class Qwen2_5VLATemplate(Qwen2_5VLTemplate):
             'feature_dim': self.traj_feat_dim,
             'total_dim': self.traj_timesteps * self.traj_feat_dim
         }
+
+    def generate(self, model, *args, **kwargs):
+        """`TransformersEngine`会调用template.generate方法进行文本生成，这里继承进行自定义。"""
+        # breakpoint()
+        # return model.generate(**inputs, **debug_cfg)
+        return super().generate(model, *args, **kwargs)
 
 # # 注册 template
 # register_template(QwenVLATemplateMeta(
