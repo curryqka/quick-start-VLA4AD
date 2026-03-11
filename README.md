@@ -50,6 +50,7 @@ pip install -e .
 ```
 
 **环境要求：**
+- ms-swift == 3.10.0dev(4.x not support in this tutorial)
 - Python ≥ 3.9
 - PyTorch ≥ 2.0
 - CUDA ≥ 11.7
