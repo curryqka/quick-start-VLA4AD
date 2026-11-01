@@ -36,6 +36,7 @@ def format_trajectory(waypoints, format_type='list'):
         waypoints: (6, 3) 数组，包含[x, y, heading]
         format_type: 输出格式 ('list', 'string', 'detailed')
     """
+    waypoints = np.asarray(waypoints, dtype=np.float32)
     if waypoints.shape[0] != 6 or waypoints.shape[1] != 3:
         raise ValueError(f"Expected shape (6, 3), got {waypoints.shape}")
     
@@ -164,8 +165,8 @@ def convert_nuscenes_to_msswift(args):
                 continue
             
             # 获取轨迹数据
-            trajectory = sample['gt_planning']
-            if trajectory.shape[0] > 1:  # 如果有多个轨迹，取第一个
+            trajectory = np.asarray(sample['gt_planning'], dtype=np.float32)
+            while trajectory.ndim > 2:  # (1, 6, 3) -> (6, 3)
                 trajectory = trajectory[0]
             
             # 检查轨迹形状
@@ -188,8 +189,12 @@ def convert_nuscenes_to_msswift(args):
             
             for camera in camera_order:
                 if camera in image_data and image_data[camera]:
-                    # 获取图片路径
+                    # 获取图片路径（OmniDrive 有的版本存成 list）
                     img_rel_path = image_data[camera]
+                    if isinstance(img_rel_path, (list, tuple)):
+                        img_rel_path = img_rel_path[0] if img_rel_path else None
+                    if not img_rel_path or isinstance(img_rel_path, dict):
+                        continue
                     
                     # 构建完整路径
                     if args.img_root:
@@ -229,7 +234,7 @@ def convert_nuscenes_to_msswift(args):
                         img_full_path = img_rel_path
                     
                     # 检查图片是否存在
-                    if args.check_images and img_full_path.startswith('/'):
+                    if args.check_images:
                         if not os.path.exists(img_full_path):
                             if args.verbose and no_images_count < 5:
                                 print(f"Warning: Image file not found: {img_full_path}")
@@ -275,7 +280,7 @@ def convert_nuscenes_to_msswift(args):
             # 用户消息
             if image_paths:
                 # 构建图像标签
-                image_tags = " ".join([f"<image>" for _ in range(len(image_paths))])
+                image_tags = " ".join(["<image>" for _ in range(len(image_paths))])
                 
                 # 获取相机描述
                 available_descriptions = [camera_descriptions.get(cam, cam.lower().replace('_', ' ') + ' view') 
@@ -304,7 +309,9 @@ def convert_nuscenes_to_msswift(args):
             # 构建转换后的样本
             converted_sample = {
                 "messages": messages,
-                "metadata": metadata
+                "metadata": metadata,
+                # Numeric label consumed by the VLA trajectory head.
+                "trajectory": trajectory.tolist(),
             }
             
             # 如果有图片，添加images字段
@@ -324,7 +331,7 @@ def convert_nuscenes_to_msswift(args):
         for sample in converted_samples:
             f.write(json.dumps(sample, ensure_ascii=False) + '\n')
     
-    print(f"\nConversion Summary:")
+    print("\nConversion Summary:")
     print(f"  Total samples: {num_samples}")
     print(f"  Successfully converted: {len(converted_samples)}")
     print(f"  Samples without trajectory: {no_trajectory_count}")
@@ -335,8 +342,8 @@ def convert_nuscenes_to_msswift(args):
     # 保存统计信息
     stats_file = output_dir / f"conversion_stats_{args.data_split}.txt"
     with open(stats_file, 'w', encoding='utf-8') as f:
-        f.write(f"Trajectory Data Conversion Statistics\n")
-        f.write(f"===================================\n")
+        f.write("Trajectory Data Conversion Statistics\n")
+        f.write("===================================\n")
         f.write(f"Input file: {args.input_file}\n")
         f.write(f"Output file: {output_file}\n")
         f.write(f"Total samples: {num_samples}\n")
@@ -350,9 +357,7 @@ def convert_nuscenes_to_msswift(args):
         f.write(f"Use scene description: {args.use_scene_description}\n")
         
         if converted_samples:
-            # 添加一些示例轨迹统计
-            sample_traj = np.array(converted_samples[0]['messages'][-1]['content'].split('\n')[0].split(': ')[1].split(', '))
-            f.write(f"\nExample trajectory (first sample):\n")
+            f.write("\nExample trajectory (first sample):\n")
             f.write(f"  Format: {converted_samples[0]['messages'][-1]['content'][:100]}...\n")
             f.write(f"  Number of images: {converted_samples[0]['metadata']['num_images']}\n")
             f.write(f"  Available cameras: {converted_samples[0]['metadata']['available_cameras']}\n")
