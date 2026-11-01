@@ -11,6 +11,7 @@ pretrained_model/
 output/
 outputs/
 infer_results/
+results/
 preprocessed_data/
 data/
 *.safetensors

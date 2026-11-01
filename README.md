@@ -19,6 +19,7 @@
 ## 目录
 
 - [仓库内容](#-仓库内容)
+- [教程与工具](#-教程与工具)
 - [环境](#-环境)
 - [模型与数据](#-模型与数据)
 - [数据转换](#-数据转换)
@@ -42,8 +43,38 @@
 | `custom_model.py` | 注册 `qwen2_5_vla` 模型与模板 |
 | `save_custom_model.py` | 基于 Qwen2.5-VL 创建带轨迹头的 VLA checkpoint |
 | `modeling_qwen2_5_vla.py` | Qwen2.5-VL + 轨迹回归头，文本 loss + 轨迹 MSE |
-| `inference_vla.py` | 单样本推理，打印文本答案与轨迹 |
-| `trajectory_utils.py` | 轨迹校验、格式化、统计（无第三方依赖） |
+| `inference_vla.py` | 单样本推理，打印文本答案与轨迹，可导出 prediction JSONL |
+| `trajectory_utils.py` | 轨迹校验、格式化、统计、ADE/FDE（无第三方依赖） |
+| `tools/check_env.py` | 检查 Python / torch / swift / CUDA / 模型路径 |
+| `tools/validate_dataset.py` | 训练前校验 messages、images、trajectory |
+| `tools/evaluate_trajectory.py` | 计算 ADE / FDE / heading error |
+| `tools/visualize_trajectory.py` | 俯视图对比预测与 GT 轨迹 |
+| `scripts/train_vla.sh` | 封装 VLA LoRA 训练命令 |
+| `docs/TUTORIAL.md` | 从数据到推理的完整教程 |
+
+## 🎓 教程与工具
+
+完整、按步骤的版本见 **[docs/TUTORIAL.md](docs/TUTORIAL.md)**。最短路径：
+
+```bash
+# 0. 环境
+python tools/check_env.py
+
+# 1. 数据转换后先校验
+python tools/validate_dataset.py \
+    --input preprocessed_data/nuscenes_navigation/nuscenes_navigation_train.jsonl \
+    --check-images --require-trajectory --strict
+
+# 2. 创建 VLA 并训练
+python save_custom_model.py --base-model Qwen/Qwen2.5-VL-3B-Instruct --save-path ./diy_model
+VLA4AD_MODEL_PATH=$PWD/diy_model bash scripts/train_vla.sh <train.jsonl> output/vla4ad_model
+
+# 3. 推理、评测、可视化
+python inference_vla.py --model output/vla4ad_merged --image <img.jpg> \
+    --gt-trajectory gt.json --output results/pred.jsonl
+python tools/evaluate_trajectory.py --input results/pred.jsonl --output results/metrics.json
+python tools/visualize_trajectory.py --input results/pred.jsonl --output results/trajectory.png
+```
 
 ## ⚙️ 环境
 
@@ -225,6 +256,17 @@ python save_custom_model.py \
 
 ### 2. 训练
 
+推荐直接用封装脚本（默认值与下面的完整命令一致）：
+
+```bash
+VLA4AD_MODEL_PATH=$PWD/diy_model \
+  bash scripts/train_vla.sh \
+    preprocessed_data/nuscenes_navigation/nuscenes_navigation_train.jsonl \
+    output/vla4ad_model
+```
+
+也可以直接调用 ms-swift：
+
 ```bash
 export VLA4AD_MODEL_PATH=$PWD/diy_model
 export CUDA_VISIBLE_DEVICES=0
@@ -304,6 +346,27 @@ python inference_vla.py \
 ```
 
 该脚本绕过 `swift infer`，因为轨迹是自定义模型输出；批量基准推理仍可使用 `swift infer` 的文本输出。
+
+### 轨迹评测与可视化
+
+`inference_vla.py --output` 会写出包含 `prediction` 的 JSONL；如果同时提供 GT：
+
+```bash
+cat > gt.json <<'EOF'
+[[0.0,0.0,0.0],[1.0,0.0,0.0],[2.0,0.0,0.0],[3.0,0.0,0.0],[4.0,0.0,0.0],[5.0,0.0,0.0]]
+EOF
+
+python inference_vla.py --model output/vla4ad_merged --image demo.jpg \
+    --gt-trajectory gt.json --id sample_001 --output results/pred.jsonl
+
+python tools/evaluate_trajectory.py \
+    --input results/pred.jsonl --output results/metrics.json
+
+python tools/visualize_trajectory.py \
+    --input results/pred.jsonl --output results/trajectory.png
+```
+
+输出 ADE、FDE、平均 heading error 和逐点 L2；可视化脚本生成俯视图。
 
 ## 📈 VLA 数据格式
 
