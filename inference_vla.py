@@ -35,6 +35,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--image", action="append", required=True, help="Image path; repeat for multiple cameras.")
     parser.add_argument("--question", default="Plan a 3-second trajectory with 6 waypoints.")
     parser.add_argument("--max-new-tokens", type=int, default=256)
+    parser.add_argument("--id", default="sample", help="Record id for the output JSONL.")
+    parser.add_argument("--output", default=None, help="Optional prediction JSONL.")
+    parser.add_argument(
+        "--gt-trajectory",
+        default=None,
+        help="Optional JSON file with the ground-truth 6x3 trajectory.",
+    )
     return parser.parse_args()
 
 
@@ -76,9 +83,23 @@ def main() -> None:
 
     print("=== Text answer ===")
     print(answer)
+    prediction = None
     if hasattr(output, "trajectory"):
+        prediction = output.trajectory.float().cpu().tolist()[0]
         print("\n=== Trajectory (6 x [x, y, heading]) ===")
-        print(output.trajectory.float().cpu().numpy())
+        print(prediction)
+
+    if args.output:
+        import json
+
+        record = {"id": args.id, "text": answer, "prediction": prediction}
+        if args.gt_trajectory:
+            record["trajectory"] = json.loads(
+                Path(args.gt_trajectory).read_text(encoding="utf-8")
+            )
+        with Path(args.output).open("w", encoding="utf-8") as handle:
+            handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+        print(f"\nSaved prediction to {args.output}")
 
 
 if __name__ == "__main__":

@@ -72,3 +72,28 @@ def trajectory_statistics(trajectory: List[List[float]]) -> Dict[str, Any]:
         "heading_change": points[-1][2] - points[0][2],
         "num_points": len(points),
     }
+
+
+def per_step_l2(
+    prediction: List[List[float]], ground_truth: List[List[float]]
+) -> List[float]:
+    """L2 distance at each waypoint (x/y only)."""
+    pred = normalize_trajectory(prediction)
+    target = normalize_trajectory(ground_truth)
+    return [math.dist(p[:2], g[:2]) for p, g in zip(pred, target)]
+
+
+def trajectory_metrics(
+    prediction: List[List[float]], ground_truth: List[List[float]]
+) -> Dict[str, Any]:
+    """ADE / FDE / mean heading error for one trajectory pair."""
+    pred = normalize_trajectory(prediction)
+    target = normalize_trajectory(ground_truth)
+    distances = per_step_l2(pred, target)
+    heading_errors = [abs(p[2] - g[2]) for p, g in zip(pred, target)]
+    return {
+        "ade": sum(distances) / len(distances),
+        "fde": distances[-1],
+        "heading_error": sum(heading_errors) / len(heading_errors),
+        "per_step_l2": distances,
+    }
