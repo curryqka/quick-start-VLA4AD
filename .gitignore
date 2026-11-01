@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Models and generated artifacts
+diy_model/
+pretrained_model/
+output/
+outputs/
+infer_results/
+preprocessed_data/
+data/
+*.safetensors
+*.bin
+*.pt
+*.pth
+
+# Logs and caches
+*.log
+.pytest_cache/
+.DS_Store

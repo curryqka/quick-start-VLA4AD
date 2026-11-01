@@ -1,0 +1,22 @@
+# Core VLM stack (Qwen2.5-VL requires transformers >= 4.50)
+torch>=2.0
+torchvision
+transformers==4.50.1
+sentencepiece
+accelerate
+huggingface_hub
+safetensors
+
+# ms-swift 3.x (4.x restructured the package)
+ms-swift==3.11.3
+peft
+deepspeed
+
+# Data preparation / trajectory utilities
+numpy
+tqdm
+pillow
+qwen-vl-utils==0.0.14
+
+# Optional: vLLM for faster inference (install separately)
+# vllm

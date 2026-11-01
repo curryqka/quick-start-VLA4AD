@@ -117,8 +117,12 @@ def convert_omnidrive_to_msswift(args):
             
             for camera in camera_order:
                 if camera in image_data and image_data[camera]:
-                    # 取第一个图片路径
-                    img_rel_path = image_data[camera][0]
+                    # 取第一个图片路径（兼容 list / str）
+                    img_rel_path = image_data[camera]
+                    if isinstance(img_rel_path, (list, tuple)):
+                        img_rel_path = img_rel_path[0] if img_rel_path else None
+                    if not img_rel_path or isinstance(img_rel_path, dict):
+                        continue
                     # 构建完整路径
                     if args.img_root:
                         img_full_path = str(Path(args.img_root) / img_rel_path)
@@ -126,7 +130,7 @@ def convert_omnidrive_to_msswift(args):
                         img_full_path = img_rel_path
                     
                     # 检查图片是否存在（如果设置了检查选项）
-                    if args.check_images and img_full_path.startswith('/'):
+                    if args.check_images:
                         if not os.path.exists(img_full_path):
                             if args.verbose:
                                 print(f"Warning: Image not found: {img_full_path}")
@@ -156,7 +160,7 @@ def convert_omnidrive_to_msswift(args):
                 if conv['from'] == 'human':
                     if i == 0 and image_paths:  # 第一条用户消息，如果有图片
                         # 构建图像标签
-                        image_tags = " ".join([f"<image>" for _ in range(len(image_paths))])
+                        image_tags = " ".join(["<image>" for _ in range(len(image_paths))])
                         
                         # 获取可用的相机描述
                         available_descriptions = [camera_descriptions.get(cam, cam.lower() + ' view') 
@@ -205,7 +209,7 @@ def convert_omnidrive_to_msswift(args):
         for sample in converted_samples:
             f.write(json.dumps(sample, ensure_ascii=False) + '\n')
     
-    print(f"\nConversion Summary:")
+    print("\nConversion Summary:")
     print(f"  Input samples: {num_samples}")
     print(f"  Converted samples: {len(converted_samples)}")
     print(f"  Errors: {error_count}")
@@ -214,8 +218,8 @@ def convert_omnidrive_to_msswift(args):
     # 保存统计信息
     stats_file = output_dir / f"conversion_stats_{args.data_split}.txt"
     with open(stats_file, 'w', encoding='utf-8') as f:
-        f.write(f"Conversion Statistics\n")
-        f.write(f"===================\n")
+        f.write("Conversion Statistics\n")
+        f.write("===================\n")
         f.write(f"Input file: {args.input_file}\n")
         f.write(f"Output file: {output_file}\n")
         f.write(f"Total input samples: {num_samples}\n")
@@ -237,7 +241,7 @@ def main():
                        help='Data split: train, val, or test')
     parser.add_argument('--convert_ratio', type=float, default=1.0,
                        help='Ratio of data to convert (0.0 to 1.0)')
-    parser.add_argument('--img_root', type=str, default='/lustre/MLM_evaluator/data/omnidrive',
+    parser.add_argument('--img_root', type=str, default='',
                        help='Root directory for images')
     parser.add_argument('--output_name', type=str, default='',
                        help='Output file name (default: auto-generated based on data split)')
